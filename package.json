@@ -9,7 +9,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "jest",
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
@@ -24,11 +24,11 @@
     "web3": "^4.16.0"
   },
   "devDependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "helmet": "^4.6.0",
     "jest": "^29.7.0",
     "nodemon": "^3.1.9",
-    "supertest": "^7.0.0",
-    "express": "^4.17.1",
-    "cors": "^2.8.5",
-    "helmet": "^4.6.0"
+    "supertest": "^7.0.0"
   }
 }

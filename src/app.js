@@ -4,10 +4,10 @@ const cors = require('cors');
 const config = require('./config');
 
 // Importar rutas
-const authRoutes = require('./routes/auth');
-const nftRoutes = require('./routes/nft');
-const marketplaceRoutes = require('./routes/marketplace');
-const statsRoutes = require('./routes/stats');
+const authRoutes = require('./routes/authRoutes');
+const nftRoutes = require('./routes/nftRoutes');
+const marketplaceRoutes = require('./routes/marketplaceRoutes');
+const statsRoutes = require('./routes/statsRoutes');
 
 const app = express();
 
