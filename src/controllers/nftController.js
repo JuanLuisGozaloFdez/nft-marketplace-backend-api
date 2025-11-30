@@ -1,6 +1,7 @@
 const NFT = require('../models/NFT');
 const { validationResult } = require('express-validator');
 const sanitizeHtml = require('sanitize-html');
+const blockchainService = require('../services/blockchainService');
 
 exports.createNFT = async (req, res) => {
   const errors = validationResult(req);
@@ -85,5 +86,39 @@ exports.deleteNFT = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Admin: Mint NFT on-chain for a ticket
+exports.adminMintNFT = async (req, res) => {
+  try {
+    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'organizer')) {
+      return res.status(403).json({ message: 'Acceso restringido: requiere rol admin u organizer' });
+    }
+    const { to, ticketId, metadata } = req.body;
+    if (!to || !ticketId) {
+      return res.status(400).json({ message: 'to y ticketId son obligatorios' });
+    }
+    const receipt = await blockchainService.mintNFT(to, ticketId, metadata || {});
+    return res.json({ txHash: receipt.transactionHash, status: receipt.status });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Blockchain mint error', error: String(error.message || error) });
+  }
+};
+
+// Admin: Get NFT owner by tokenId
+exports.adminGetOwner = async (req, res) => {
+  try {
+    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'organizer')) {
+      return res.status(403).json({ message: 'Acceso restringido: requiere rol admin u organizer' });
+    }
+    const { tokenId } = req.params;
+    if (!tokenId) return res.status(400).json({ message: 'tokenId es obligatorio' });
+    const owner = await blockchainService.getTicketOwner(tokenId);
+    return res.json({ tokenId, owner });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Blockchain owner lookup error', error: String(error.message || error) });
   }
 };

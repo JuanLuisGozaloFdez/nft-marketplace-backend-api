@@ -8,6 +8,9 @@ const authRoutes = require('./routes/authRoutes');
 const nftRoutes = require('./routes/nftRoutes');
 const marketplaceRoutes = require('./routes/marketplaceRoutes');
 const statsRoutes = require('./routes/statsRoutes');
+const eventAdminRoutes = require('./routes/eventAdminRoutes');
+const adminUserRoutes = require('./routes/adminUserRoutes');
+const checkinRoutes = require('./routes/checkinRoutes');
 
 const app = express();
 
@@ -29,6 +32,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/nft', nftRoutes);
 app.use('/api/marketplace', marketplaceRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/checkins', checkinRoutes);
+app.use('/api/admin', eventAdminRoutes);
+app.use('/api/admin', adminUserRoutes);
 
 // Manejo de errores
 app.use((err, req, res, next) => {

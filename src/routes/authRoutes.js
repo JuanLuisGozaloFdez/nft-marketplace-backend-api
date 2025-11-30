@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const authController = require('../controllers/authController');
 const twoFactorAuth = require('../middleware/twoFactorAuth');
+const { authenticate } = require('../utils/jwtUtils');
 
 const router = express.Router();
 
@@ -26,5 +27,7 @@ router.post('/login', loginLimiter, [
 router.post('/verify-2fa', [
   body('token').trim().isLength({ min: 6, max: 6 })
 ], twoFactorAuth.verify, authController.verifyTwoFactor);
+
+router.get('/me', authenticate, authController.me);
 
 module.exports = router;

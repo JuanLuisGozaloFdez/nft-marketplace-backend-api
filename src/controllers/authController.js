@@ -5,6 +5,7 @@ const User = require('../models/User');
 const { JWT_SECRET } = require('../config');
 const speakeasy = require('speakeasy');
 const rateLimit = require('express-rate-limit');
+const { generateToken } = require('../utils/jwtUtils');
 
 // Implementar rate limiting
 const loginLimiter = rateLimit({
@@ -70,24 +71,37 @@ exports.login = [loginLimiter, async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Verificar 2FA
-    const verified = speakeasy.totp.verify({
-      secret: user.twoFactorSecret,
-      encoding: 'base32',
-      token: token
-    });
-
-    if (!verified) {
-      return res.status(400).json({ message: 'Invalid 2FA token' });
+    // Verificar 2FA si se proporciona token (modo flexible)
+    if (token) {
+      const verified = speakeasy.totp.verify({
+        secret: user.twoFactorSecret,
+        encoding: 'base32',
+        token: token
+      });
+      if (!verified) {
+        return res.status(400).json({ message: 'Invalid 2FA token' });
+      }
     }
 
-    const payload = { user: { id: user.id } };
-    jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' }, (err, token) => {
-      if (err) throw err;
-      res.json({ token });
-    });
+    const role = user.role || 'user';
+    const jwtToken = generateToken(user.id, role);
+    res.json({ token: jwtToken, role });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 }];
+
+exports.me = async (req, res) => {
+  try {
+    const auth = req.headers.authorization || '';
+    const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+    if (!token) return res.status(401).json({ message: 'Missing token' });
+    const payload = jwt.verify(token, JWT_SECRET);
+    const user = await User.findById(payload.userId).select('_id email role username').lean();
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json({ id: String(user._id), email: user.email, role: user.role, username: user.username });
+  } catch (err) {
+    return res.status(401).json({ message: 'Invalid token' });
+  }
+};
