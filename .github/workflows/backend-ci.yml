@@ -38,9 +38,40 @@ jobs:
       - uses: codecov/codecov-action@v3
         continue-on-error: true
 
+  db-connect-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      - name: Install deps
+        run: npm ci
+      - name: MongoDB connection smoke test
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        run: |
+          node -e "const mongoose=require('mongoose');(async()=>{try{await mongoose.connect(process.env.MONGODB_URI,{useNewUrlParser:true,useUnifiedTopology:true});console.log('Mongo OK');process.exit(0);}catch(e){console.error(e);process.exit(1);}})()"
+
+  blockchain-smoke-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install web3
+        run: npm i web3
+      - name: Provider and block number check
+        env:
+          BLOCKCHAIN_PROVIDER_URL: ${{ secrets.BLOCKCHAIN_PROVIDER_URL }}
+        run: |
+          node -e "const Web3=require('web3');const w=new Web3(new Web3.providers.HttpProvider(process.env.BLOCKCHAIN_PROVIDER_URL));w.eth.getBlockNumber().then(n=>{console.log('BlockNumber',n);process.exit(0)}).catch(e=>{console.error(e);process.exit(1)})"
+
   kube-lint:
     runs-on: ubuntu-latest
-    needs: [lint, test]
+    needs: [lint, test, db-connect-check, blockchain-smoke-check]
     steps:
       - uses: actions/checkout@v4
       - name: Install kube-linter
